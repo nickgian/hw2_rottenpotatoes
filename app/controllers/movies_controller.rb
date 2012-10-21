@@ -7,9 +7,41 @@ class MoviesController < ApplicationController
   end
 
   def index
-    @movies = Movie.all
-  end
+	@all_ratings = Movie.all_ratings
+    
+    @sort_by = params[:sort_by]
+	@selected_ratings = params[:ratings]
+    
+    if (session[:ratings] == nil) 
+      session[:ratings] = {}
+      @all_ratings.each { |r| session[:ratings][r] = 1 }
+    end
 
+    if (@selected_ratings == nil)
+      @selected_ratings = session[:ratings]
+      @sort_by = session[:sort_by]
+      flash.keep
+      redirect_to movies_path(:sort_by => @sort_by, :ratings => @selected_ratings)
+    end
+
+    session[:ratings] = @selected_ratings 
+    session[:sort_by] = @sort_by
+
+    case @sort_by
+	when "title"
+     @movies = Movie.order(@sort_by).find(:all,
+                :conditions => {:rating => (@selected_ratings.keys) })
+     @title_header = "hilite"
+	when "release_date"
+     @movies = Movie.order(@sort_by).find(:all,
+                :conditions => {:rating => (@selected_ratings.keys) })
+     @release_date_header = "hilite"
+	else 
+	 @movies = Movie.find(:all,
+                :conditions => {:rating => (@selected_ratings.keys) })
+	end
+  end
+  
   def new
     # default: render 'new' template
   end
